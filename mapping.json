@@ -1,0 +1,30 @@
+{
+  "failed login": {
+    "technique_id": "T1110",
+    "technique_name": "Brute Force",
+    "tactic": "Credential Access",
+    "stage": "Initial Access",
+    "description": "Multiple failed authentication attempts suggest brute force activity."
+  },
+  "lsass": {
+    "technique_id": "T1003",
+    "technique_name": "OS Credential Dumping",
+    "tactic": "Credential Access",
+    "stage": "Privilege Escalation",
+    "description": "Attempt to access LSASS memory indicates credential dumping."
+  },
+  "rdp": {
+    "technique_id": "T1021",
+    "technique_name": "Remote Services",
+    "tactic": "Lateral Movement",
+    "stage": "Lateral Movement",
+    "description": "Suspicious RDP session indicates attacker moving within the network."
+  },
+  "encrypted": {
+    "technique_id": "T1486",
+    "technique_name": "Data Encrypted for Impact",
+    "tactic": "Impact",
+    "stage": "Impact",
+    "description": "Mass encryption of files indicates ransomware activity."
+  }
+}
