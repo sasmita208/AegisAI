@@ -1,3 +1,74 @@
+import csv
+import re
+from datetime import datetime
+from pathlib import Path
+
+# Regex patterns
+timestamp_patterns = [
+    r"(?P<timestamp>\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})",   # Jan 12 08:32:15
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})",   # 2023-01-12 08:32:15
+]
+ip_pattern = r"(?P<ip>(?:\d{1,3}\.){3}\d{1,3})"
+port_pattern = r"port\s+(?P<port>\d+)"
+pid_pattern = r"\[(?P<pid>\d+)\]"
+
+def extract_timestamp(text):
+    for pattern in timestamp_patterns:
+        match = re.search(pattern, text)
+        if match:
+            ts = match.group("timestamp")
+            for fmt in ["%b %d %H:%M:%S", "%Y-%m-%d %H:%M:%S"]:
+                try:
+                    parsed = datetime.strptime(ts, fmt)
+                    return parsed.isoformat()
+                except ValueError:
+                    continue
+            return ts
+    return ""
+
+def extract_fields(text):
+    return {
+        "timestamp": extract_timestamp(text),
+        "ip": re.search(ip_pattern, text).group("ip") if re.search(ip_pattern, text) else "",
+        "port": re.search(port_pattern, text).group("port") if re.search(port_pattern, text) else "",
+        "pid": re.search(pid_pattern, text).group("pid") if re.search(pid_pattern, text) else "",
+        "message": text.strip()
+    }
+
+def process_csv(input_file, output_writer):
+    with open(input_file, newline='', encoding='utf-8') as infile:
+        reader = csv.DictReader(infile)
+        # Check if there's a 'message' column, otherwise combine all columns
+        for row in reader:
+            message = row.get("message") or " ".join(row.values())
+            fields = extract_fields(message)
+            output_writer.writerow(fields)
+
+def process_txt(input_file, output_writer):
+    with open(input_file, encoding='utf-8') as infile:
+        for line in infile:
+            fields = extract_fields(line)
+            output_writer.writerow(fields)
+
+def process_all(input_folder, output_file):
+    log_dir = Path(input_folder)
+    with open(output_file, "w", newline='', encoding='utf-8') as outfile:
+        fieldnames = ["timestamp", "ip", "port", "pid", "message"]
+        writer = csv.DictWriter(outfile, fieldnames=fieldnames)
+        writer.writeheader()
+        
+        for file_path in log_dir.glob("*"):
+            if file_path.suffix.lower() == ".csv":
+                print(f"Processing CSV: {file_path}")
+                process_csv(file_path, writer)
+            elif file_path.suffix.lower() == ".txt":
+                print(f"Processing TXT: {file_path}")
+                process_txt(file_path, writer)
+            else:
+                print(f"Skipping unsupported file: {file_path}")
+
+# Run parser
+process_all("logs", "parsed_logs.csv")
 import re
 import csv
 from datetime import datetime
